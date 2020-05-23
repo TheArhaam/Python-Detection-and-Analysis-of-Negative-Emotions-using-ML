@@ -17,6 +17,7 @@ import os
 import time
 import tkinter
 from tkinter import *
+import random
 
 
 class SentimentAnalysisNLP:
@@ -70,7 +71,7 @@ class SentimentAnalysisNLP:
             self.NoOfTerms = 190
 
         # searching for tweets
-        self.tweets = api.user_timeline(screen_name=self.twitterUname, count=self.NoOfTerms)
+        self.tweets = api.user_timeline(screen_name=self.twitterUname, count=self.NoOfTerms,tweet_mode = 'extended')
 
         # Open/create a file to append data to (Delete if existing)
         # if(os.path.exists('result.csv')):
@@ -83,7 +84,7 @@ class SentimentAnalysisNLP:
         # csvWriter.writerow(self.tweetText)
         # csvFile.close()
 
-        sa.NLPAnalysis()
+        self.NLPAnalysis()
 
     def NLPAnalysis(self):
         # Initializing variables
@@ -95,17 +96,23 @@ class SentimentAnalysisNLP:
         self.wnegative = 0
         self.snegative = 0
         self.neutral = 0
+
+        # Opening file to write tweets
+        testFile = open('2018-E-c-En-test.txt','w',encoding='utf-8')
+        testFile.truncate()
+        testFile.write('ID\tTweet\tanger\tanticipation\tdisgust\tfear\tjoy\tlove\toptimism\tpessimism\tsadness\tsurprise\ttrust')
         # iterating through tweets fetched
         for tweet in self.tweets:
             #Append to temp so that we can store in csv later. I use encode UTF-8
-            self.tweetText.append(self.cleanTweet(tweet.text).encode('utf-8'))
+            # self.tweetText.append(self.cleanTweet(tweet.text).encode('utf-8'))
             # print (tweet.text.translate(non_bmp_map))    #print tweet's text
-            analysis = TextBlob(tweet.text)
+            analysis = TextBlob(tweet.full_text)
             # print(analysis.sentiment)  # print tweet's polarity
             self.polarity += analysis.sentiment.polarity  # adding up polarities to find the average later
 
             if (analysis.sentiment.polarity == 0):  # adding reaction of how people are reacting to find average later
                 self.neutral += 1
+                # testFile.write('\n'+str(tweet.created_at.year)+str(tweet.created_at.month)+str(tweet.created_at.day)+str(tweet.created_at.hour)+'\t'+self.cleanTweet(tweet.text)+'\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE')
             elif (analysis.sentiment.polarity > 0 and analysis.sentiment.polarity <= 0.3):
                 self.wpositive += 1
                 # positive += 1
@@ -116,13 +123,18 @@ class SentimentAnalysisNLP:
                 # positive += 1
             elif (analysis.sentiment.polarity > -0.3 and analysis.sentiment.polarity <= 0):
                 self.wnegative += 1
+                testFile.write('\n'+self.getTweetId(tweet)+'\t'+self.cleanTweet(self.getTweetText(tweet))+'\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE')
                 # negative += 1
             elif (analysis.sentiment.polarity > -0.6 and analysis.sentiment.polarity <= -0.3):
                 self.negative += 1
+                testFile.write('\n'+self.getTweetId(tweet)+'\t'+self.cleanTweet(self.getTweetText(tweet))+'\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE')
             elif (analysis.sentiment.polarity > -1 and analysis.sentiment.polarity <= -0.6):
                 self.snegative += 1
+                testFile.write('\n'+self.getTweetId(tweet)+'\t'+self.cleanTweet(self.getTweetText(tweet))+'\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE')
                 # negative += 1
-        
+        testFile.close()
+
+
         # finding average of how people are reacting
         self.positive = self.percentage(self.positive, self.NoOfTerms)
         self.wpositive = self.percentage(self.wpositive, self.NoOfTerms)
@@ -134,7 +146,23 @@ class SentimentAnalysisNLP:
 
         # finding average reaction
         self.polarity = self.polarity / self.NoOfTerms
-        sa.plotPieChart()
+        self.plotPieChart()
+
+    def getTweetId(self,tweet):
+        return str(tweet.created_at.year)+str(tweet.created_at.month)+str(tweet.created_at.day)+str(tweet.created_at.hour)
+
+    def getTweetText(self, tweet):
+        return tweet.full_text
+        # if hasattr(tweet, "retweeted_status"):  # Check if Retweet
+        #     try:
+        #         return tweet.retweeted_status.extended_tweet["full_text"]
+        #     except AttributeError:
+        #         return tweet.retweeted_status.text
+        # else:
+        #     try:
+        #         return tweet.extended_tweet["full_text"]
+        #     except AttributeError:
+        #         return tweet.text
 
     def cleanTweet(self, tweet):
         return ' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t]) | (\w +:\ / \ / \S +)", " ", tweet).split())
@@ -174,5 +202,5 @@ class SentimentAnalysisNLP:
 
 if __name__== "__main__":
     root = tkinter.Tk()
-    sa = SentimentAnalysisNLP(root)
+    sanlp = SentimentAnalysisNLP(root)
     root.mainloop()
