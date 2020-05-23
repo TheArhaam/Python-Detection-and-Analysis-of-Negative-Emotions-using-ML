@@ -9,15 +9,47 @@
 import sys,tweepy,csv,re
 from textblob import TextBlob
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("TkAgg")
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 import os
 import time
+import tkinter
+from tkinter import *
 
 
-class SentimentAnalysis:
+class SentimentAnalysisNLP:
 
-    def __init__(self):
+    def __init__(self,root):
         self.tweets = []
         self.tweetText = []
+        self.polarity = int()
+        self.positive = int()
+        self.wpositive = int()
+        self.spositive = int()
+        self.negative = int()
+        self.wnegative = int()
+        self.snegative = int()
+        self.neutral = int()
+        self.NoOfTerms = int()
+        self.twitterUname = str()
+        self.root = root
+     
+        self.root.title('Detection and Analysis of Negative Emotions using ML')
+
+        self.twitterULabel = Label(root,text="Enter Twitter Username: ")
+        self.twitterULabel.config(font=('','15'))
+
+        strvar = StringVar(root)
+        self.twitterUEntry = Entry(root,width=50,textvariable=strvar)
+        self.twitterUEntry.config(font=('','12'))
+
+        self.submitBttn = tkinter.Button(root, text="SUBMIT", padx=10,pady=5, command=self.DownloadData)
+
+        self.twitterULabel.grid(row=0,column=0,padx=5,pady=5)
+        self.twitterUEntry.grid(row=1,column=0,padx=10,pady=5)
+        self.submitBttn.grid(row=2,column=0,padx=5,pady=5);
 
     def DownloadData(self):
         # authenticating
@@ -29,43 +61,40 @@ class SentimentAnalysis:
         auth.set_access_token(accessToken, accessTokenSecret)
         api = tweepy.API(auth)
 
-        # INPUT
-        username = 'iamsrk'
-
-        # input for term to be searched and how many tweets to search
-        # searchTerm = input("Enter Keyword/Tag to search about: ")
-        # NoOfTerms = int(input("Enter how many tweets to search: "))
+        self.twitterUname = self.twitterUEntry.get()
 
         # GETTING NUMBER OF TWEETS
-        NoOfTerms = api.get_user(username).statuses_count
-        if(NoOfTerms>200):
-            NoOfTerms = 190
+        self.NoOfTerms = api.get_user(self.twitterUname).statuses_count
+        # Limit of 200 tweets
+        if(self.NoOfTerms>200):
+            self.NoOfTerms = 190
 
         # searching for tweets
-        # self.tweets = tweepy.Cursor(api.search, q=searchTerm, lang = "en").items(NoOfTerms)
-        self.tweets = api.user_timeline(screen_name=username, count=NoOfTerms)
+        self.tweets = api.user_timeline(screen_name=self.twitterUname, count=self.NoOfTerms)
 
         # Open/create a file to append data to (Delete if existing)
-        if(os.path.exists('result.csv')):
-            os.remove('result.csv')
-        time.sleep(4)
-        csvFile = open('result.csv', 'a')
-
+        # if(os.path.exists('result.csv')):
+        #     os.remove('result.csv')
+        # time.sleep(4)
+        # csvFile = open('result.csv', 'a')
         # Use csv writer
-        csvWriter = csv.writer(csvFile)
+        # csvWriter = csv.writer(csvFile)
+        # Write to csv and close csv file
+        # csvWriter.writerow(self.tweetText)
+        # csvFile.close()
 
+        sa.NLPAnalysis()
 
-        # creating some variables to store info
-        polarity = 0
-        positive = 0
-        wpositive = 0
-        spositive = 0
-        negative = 0
-        wnegative = 0
-        snegative = 0
-        neutral = 0
-
-
+    def NLPAnalysis(self):
+        # Initializing variables
+        self.polarity = 0
+        self.positive = 0
+        self.wpositive = 0
+        self.spositive = 0
+        self.negative = 0
+        self.wnegative = 0
+        self.snegative = 0
+        self.neutral = 0
         # iterating through tweets fetched
         for tweet in self.tweets:
             #Append to temp so that we can store in csv later. I use encode UTF-8
@@ -73,96 +102,77 @@ class SentimentAnalysis:
             # print (tweet.text.translate(non_bmp_map))    #print tweet's text
             analysis = TextBlob(tweet.text)
             # print(analysis.sentiment)  # print tweet's polarity
-            polarity += analysis.sentiment.polarity  # adding up polarities to find the average later
+            self.polarity += analysis.sentiment.polarity  # adding up polarities to find the average later
 
             if (analysis.sentiment.polarity == 0):  # adding reaction of how people are reacting to find average later
-                neutral += 1
+                self.neutral += 1
             elif (analysis.sentiment.polarity > 0 and analysis.sentiment.polarity <= 0.3):
-                wpositive += 1
+                self.wpositive += 1
+                # positive += 1
             elif (analysis.sentiment.polarity > 0.3 and analysis.sentiment.polarity <= 0.6):
-                positive += 1
+                self.positive += 1
             elif (analysis.sentiment.polarity > 0.6 and analysis.sentiment.polarity <= 1):
-                spositive += 1
+                self.spositive += 1
+                # positive += 1
             elif (analysis.sentiment.polarity > -0.3 and analysis.sentiment.polarity <= 0):
-                wnegative += 1
+                self.wnegative += 1
+                # negative += 1
             elif (analysis.sentiment.polarity > -0.6 and analysis.sentiment.polarity <= -0.3):
-                negative += 1
+                self.negative += 1
             elif (analysis.sentiment.polarity > -1 and analysis.sentiment.polarity <= -0.6):
-                snegative += 1
-
-
-        # Write to csv and close csv file
-        csvWriter.writerow(self.tweetText)
-        csvFile.close()
-
+                self.snegative += 1
+                # negative += 1
+        
         # finding average of how people are reacting
-        positive = self.percentage(positive, NoOfTerms)
-        wpositive = self.percentage(wpositive, NoOfTerms)
-        spositive = self.percentage(spositive, NoOfTerms)
-        negative = self.percentage(negative, NoOfTerms)
-        wnegative = self.percentage(wnegative, NoOfTerms)
-        snegative = self.percentage(snegative, NoOfTerms)
-        neutral = self.percentage(neutral, NoOfTerms)
+        self.positive = self.percentage(self.positive, self.NoOfTerms)
+        self.wpositive = self.percentage(self.wpositive, self.NoOfTerms)
+        self.spositive = self.percentage(self.spositive, self.NoOfTerms)
+        self.negative = self.percentage(self.negative, self.NoOfTerms)
+        self.wnegative = self.percentage(self.wnegative, self.NoOfTerms)
+        self.snegative = self.percentage(self.snegative, self.NoOfTerms)
+        self.neutral = self.percentage(self.neutral, self.NoOfTerms)
 
         # finding average reaction
-        polarity = polarity / NoOfTerms
-
-        # REPORT
-        print('ANALYSING TWEETS OF USER: '+username)
-        print()
-        print("General Report: ")
-
-        if (polarity == 0):
-            print("Neutral")
-        elif (polarity > 0 and polarity <= 0.3):
-            print("Weakly Positive")
-        elif (polarity > 0.3 and polarity <= 0.6):
-            print("Positive")
-        elif (polarity > 0.6 and polarity <= 1):
-            print("Strongly Positive")
-        elif (polarity > -0.3 and polarity <= 0):
-            print("Weakly Negative")
-        elif (polarity > -0.6 and polarity <= -0.3):
-            print("Negative")
-        elif (polarity > -1 and polarity <= -0.6):
-            print("Strongly Negative")
-
-        print()
-        print("Detailed Report: ")
-        print(str(positive) + "% positive")
-        print(str(wpositive) + "% weakly positive")
-        print(str(spositive) + "%"+" strongly positive")
-        print(str(negative) + "% negative")
-        print(str(wnegative) + "% weakly negative")
-        print(str(snegative) + "%"+" strongly negative")
-        print(str(neutral) + "% neutral")
-
-        self.plotPieChart(positive, wpositive, spositive, negative, wnegative, snegative, neutral, username, NoOfTerms)
-
+        self.polarity = self.polarity / self.NoOfTerms
+        sa.plotPieChart()
 
     def cleanTweet(self, tweet):
-        # Remove Links, Special Characters etc from tweet
         return ' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t]) | (\w +:\ / \ / \S +)", " ", tweet).split())
 
-    # function to calculate percentage
     def percentage(self, part, whole):
         temp = 100 * float(part) / float(whole)
         return format(temp, '.2f')
 
-    def plotPieChart(self, positive, wpositive, spositive, negative, wnegative, snegative, neutral, username, noOfSearchTerms):
+    def plotPieChart(self):
+        polarity = self.polarity
+        positive = self.positive
+        wpositive = self.wpositive
+        spositive = self.spositive
+        negative = self.negative
+        wnegative = self.wnegative
+        snegative = self.snegative
+        neutral = self.neutral
         labels = ['Positive [' + str(positive) + '%]', 'Weakly Positive [' + str(wpositive) + '%]','Strongly Positive [' + str(spositive) + '%]', 'Neutral [' + str(neutral) + '%]',
                   'Negative [' + str(negative) + '%]', 'Weakly Negative [' + str(wnegative) + '%]', 'Strongly Negative [' + str(snegative) + '%]']
+        # labels = ['Positive [' + str(positive) + '%]', 'Neutral [' + str(neutral) + '%]','Negative [' + str(negative) + '%]']
         sizes = [positive, wpositive, spositive, neutral, negative, wnegative, snegative]
+        # sizes = [positive, neutral, negative]
         colors = ['yellowgreen','lightgreen','darkgreen', 'gold', 'red','lightsalmon','darkred']
-        patches, texts = plt.pie(sizes, colors=colors, startangle=90)
-        plt.legend(patches, labels, loc="best")
-        plt.title('ANALYSING TWEETS OF USER: '+username+' TWEET COUNT: '+str(noOfSearchTerms))
-        plt.axis('equal')
-        plt.tight_layout()
-        plt.show()
+        
+        fig = matplotlib.figure.Figure(figsize=(7,5))
+        ax = fig.add_subplot(111)
+        patches, texts = ax.pie(sizes, colors=colors, startangle=90)
+        ax.legend(patches, labels, loc="best")
+        # ax1.title.set_text('First Plot')
+        ax.title.set_text('ANALYSING TWEETS OF USER: '+self.twitterUname+' TWEET COUNT: '+str(self.NoOfTerms))
+        # ax.axis('equal')
+        # ax.tight_layout()
+        canvas = FigureCanvasTkAgg(fig,master=self.root)
+        canvas.get_tk_widget().grid(row=3,column=0,padx=5,pady=5)
 
 
 
 if __name__== "__main__":
-    sa = SentimentAnalysis()
-    sa.DownloadData()
+    root = tkinter.Tk()
+    sa = SentimentAnalysisNLP(root)
+    root.mainloop()
