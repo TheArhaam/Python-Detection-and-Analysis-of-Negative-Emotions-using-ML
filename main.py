@@ -36,6 +36,9 @@ from tkinter.ttk import *
 import threading
 #endregion
 
+# TO-DO
+# TRY TO CREATE TABLE IN TKINTER FOR THE OUTPUT
+
 # FIRST APPROACH
 # SENTIMENT ANALYSIS USING NATURAL LANGUAGE PROCESSING
 class SentimentAnalysisNLP:
@@ -66,13 +69,12 @@ class SentimentAnalysisNLP:
         self.twitterUEntry = Entry(root,width=50,textvariable=strvar)
         self.twitterUEntry.config(font=('','12'))
 
-        self.submitBttn = tkinter.Button(root, text="SUBMIT", padx=10,pady=5, command=self.DownloadData)
-        self.MLBttn = tkinter.Button(root, text="NEXT (ML Approach)", padx=10,pady=5, command=self.saml.start)
+        self.submitBttn = tkinter.Button(root, text="SUBMIT", padx=10, pady=5, command=self.DownloadData)
+        self.MLBttn = tkinter.Button(root, text="NEXT (ML Approach)", padx=10, pady=5, command=self.saml.start)
 
         self.twitterULabel.grid(row=0,column=0,padx=5,pady=5)
-        self.twitterUEntry.grid(row=1,column=0,padx=10,pady=5)
-        self.submitBttn.grid(row=2,column=0,padx=5,pady=5);
-
+        self.twitterUEntry.grid(row=1,column=0,padx=10,pady=5, rowspan=2)
+        self.submitBttn.grid(row=3,column=0,padx=5,pady=5, rowspan=2);
 
     def DownloadData(self):
         # authenticating
@@ -209,20 +211,63 @@ class SentimentAnalysisNLP:
         # sizes = [positive, neutral, negative]
         colors = ['yellowgreen','lightgreen','darkgreen', 'gold', 'red','lightsalmon','darkred']
         
-        fig = matplotlib.figure.Figure(figsize=(7,5))
+        fig = matplotlib.figure.Figure(figsize=(5,5))
         ax = fig.add_subplot(111)
         patches, texts = ax.pie(sizes, colors=colors, startangle=90)
         ax.legend(patches, labels, loc="best")
         # ax1.title.set_text('First Plot')
-        ax.title.set_text('ANALYSING TWEETS OF USER: '+self.twitterUname+' TWEET COUNT: '+str(self.NoOfTerms))
+        ax.title.set_text('USER: '+self.twitterUname+' TWEETS: '+str(self.NoOfTerms))
         # ax.axis('equal')
         # ax.tight_layout()
         canvas = FigureCanvasTkAgg(fig,master=self.root)
-        canvas.get_tk_widget().grid(row=3,column=0,padx=5,pady=5)
-        self.MLBttn.grid(row=4,column=0,padx=5,pady=5)
+        canvas.get_tk_widget().grid(row=5,column=0,padx=5,pady=5,rowspan=23)
+        self.MLBttn.grid(row=29,column=0,padx=5,pady=5, rowspan=2)
 
     def samlComplete(self):
-        self.successLabel.grid(row=5,column=0,padx=5,pady=5);
+        self.successLabel.grid(row=5,column=0,padx=5,pady=5)
+        self.ofile = open('E-C_en_pred.txt','r',encoding='utf-8')
+        self.rows = sum(1 for line in self.ofile)
+        self.ofile.close()
+        self.ofile = open('E-C_en_pred.txt','r',encoding='utf-8')
+
+        # TITLES
+        self.titles = self.ofile.readline().split('\t')
+        self.l1 = Label(self.root,text=self.titles[1], font=('bold'))
+        self.l2 = Label(self.root,text=self.titles[2], font=('bold'))
+        self.l3 = Label(self.root,text=self.titles[4], font=('bold'))
+        self.l4 = Label(self.root,text=self.titles[5], font=('bold'))
+        self.l5 = Label(self.root,text=self.titles[9], font=('bold'))
+        self.l6 = Label(self.root,text=self.titles[10], font=('bold'))
+        self.l1.grid(row=0,column=1)
+        self.l2.grid(row=0,column=2)
+        self.l3.grid(row=0,column=3)
+        self.l4.grid(row=0,column=4)
+        self.l5.grid(row=0,column=5)
+        self.l6.grid(row=0,column=6)
+
+
+        for i in range(1,self.rows):
+            line = self.ofile.readline().split('\t')
+            self.e1 = Entry(self.root,width=100)
+            self.e2 = Entry(self.root,width=15)
+            self.e3 = Entry(self.root,width=15)
+            self.e4 = Entry(self.root,width=15)
+            self.e5 = Entry(self.root,width=15)
+            self.e6 = Entry(self.root,width=15)
+            
+            self.e1.grid(row=i,column= 1)
+            self.e2.grid(row=i,column= 2)
+            self.e3.grid(row=i,column= 3)
+            self.e4.grid(row=i,column= 4)
+            self.e5.grid(row=i,column= 5)
+            self.e6.grid(row=i,column= 6)
+
+            self.e1.insert(END,line[1]) 
+            self.e2.insert(END,line[2]) 
+            self.e3.insert(END,line[4]) 
+            self.e4.insert(END,line[5]) 
+            self.e5.insert(END,line[9]) 
+            self.e6.insert(END,line[10]) 
 
 # SECOND APPROACH
 # SENTIMENT ANALYSIS USING MACHINE LEARNING
@@ -295,7 +340,7 @@ class SentimentAnalysisML():
         network.add(Dropout(rate=0.3))
         network.add(Dense(units=11, activation='sigmoid'))
         network.compile(loss='binary_crossentropy', optimizer='adam')
-        network.fit(x=x_train, y=y_train, batch_size=16, epochs=30, verbose=1)
+        network.fit(x=x_train, y=y_train, batch_size=16, epochs=1, verbose=1)
 
         vec = np.vectorize(int)
 
