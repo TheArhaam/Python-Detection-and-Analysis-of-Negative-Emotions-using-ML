@@ -340,7 +340,7 @@ class SentimentAnalysisML():
         network.add(Dropout(rate=0.3))
         network.add(Dense(units=11, activation='sigmoid'))
         network.compile(loss='binary_crossentropy', optimizer='adam')
-        network.fit(x=x_train, y=y_train, batch_size=16, epochs=1, verbose=1)
+        network.fit(x=x_train, y=y_train, batch_size=16, epochs=30, verbose=1)
 
         vec = np.vectorize(int)
 
