@@ -37,7 +37,7 @@ import threading
 #endregion
 
 # TO-DO
-# TRY TO CREATE TABLE IN TKINTER FOR THE OUTPUT
+# TRY TO ANALYZE ML OUTPUT
 
 # FIRST APPROACH
 # SENTIMENT ANALYSIS USING NATURAL LANGUAGE PROCESSING
@@ -97,17 +97,6 @@ class SentimentAnalysisNLP:
         # searching for tweets
         self.tweets = api.user_timeline(screen_name=self.twitterUname, count=self.NoOfTerms,tweet_mode = 'extended')
 
-        # Open/create a file to append data to (Delete if existing)
-        # if(os.path.exists('result.csv')):
-        #     os.remove('result.csv')
-        # time.sleep(4)
-        # csvFile = open('result.csv', 'a')
-        # Use csv writer
-        # csvWriter = csv.writer(csvFile)
-        # Write to csv and close csv file
-        # csvWriter.writerow(self.tweetText)
-        # csvFile.close()
-
         self.NLPAnalysis()
 
     def NLPAnalysis(self):
@@ -127,35 +116,26 @@ class SentimentAnalysisNLP:
         testFile.write('ID\tTweet\tanger\tanticipation\tdisgust\tfear\tjoy\tlove\toptimism\tpessimism\tsadness\tsurprise\ttrust')
         # iterating through tweets fetched
         for tweet in self.tweets:
-            #Append to temp so that we can store in csv later. I use encode UTF-8
-            # self.tweetText.append(self.cleanTweet(tweet.text).encode('utf-8'))
-            # print (tweet.text.translate(non_bmp_map))    #print tweet's text
             analysis = TextBlob(tweet.full_text)
-            # print(analysis.sentiment)  # print tweet's polarity
             self.polarity += analysis.sentiment.polarity  # adding up polarities to find the average later
 
             if (analysis.sentiment.polarity == 0):  # adding reaction of how people are reacting to find average later
-                self.neutral += 1
-                # testFile.write('\n'+str(tweet.created_at.year)+str(tweet.created_at.month)+str(tweet.created_at.day)+str(tweet.created_at.hour)+'\t'+self.cleanTweet(tweet.text)+'\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE')
+                self.neutral += 1                
             elif (analysis.sentiment.polarity > 0 and analysis.sentiment.polarity <= 0.3):
                 self.wpositive += 1
-                # positive += 1
             elif (analysis.sentiment.polarity > 0.3 and analysis.sentiment.polarity <= 0.6):
                 self.positive += 1
             elif (analysis.sentiment.polarity > 0.6 and analysis.sentiment.polarity <= 1):
                 self.spositive += 1
-                # positive += 1
             elif (analysis.sentiment.polarity > -0.3 and analysis.sentiment.polarity <= 0):
                 self.wnegative += 1
                 testFile.write('\n'+self.getTweetId(tweet)+'\t'+self.cleanTweet(self.getTweetText(tweet))+'\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE')
-                # negative += 1
             elif (analysis.sentiment.polarity > -0.6 and analysis.sentiment.polarity <= -0.3):
                 self.negative += 1
                 testFile.write('\n'+self.getTweetId(tweet)+'\t'+self.cleanTweet(self.getTweetText(tweet))+'\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE')
             elif (analysis.sentiment.polarity > -1 and analysis.sentiment.polarity <= -0.6):
                 self.snegative += 1
                 testFile.write('\n'+self.getTweetId(tweet)+'\t'+self.cleanTweet(self.getTweetText(tweet))+'\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE\tNONE')
-                # negative += 1
         testFile.close()
 
 
@@ -177,16 +157,6 @@ class SentimentAnalysisNLP:
 
     def getTweetText(self, tweet):
         return tweet.full_text
-        # if hasattr(tweet, "retweeted_status"):  # Check if Retweet
-        #     try:
-        #         return tweet.retweeted_status.extended_tweet["full_text"]
-        #     except AttributeError:
-        #         return tweet.retweeted_status.text
-        # else:
-        #     try:
-        #         return tweet.extended_tweet["full_text"]
-        #     except AttributeError:
-        #         return tweet.text
 
     def cleanTweet(self, tweet):
         return ' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t]) | (\w +:\ / \ / \S +)", " ", tweet).split())
@@ -204,21 +174,17 @@ class SentimentAnalysisNLP:
         wnegative = self.wnegative
         snegative = self.snegative
         neutral = self.neutral
+
         labels = ['Positive [' + str(positive) + '%]', 'Weakly Positive [' + str(wpositive) + '%]','Strongly Positive [' + str(spositive) + '%]', 'Neutral [' + str(neutral) + '%]',
                   'Negative [' + str(negative) + '%]', 'Weakly Negative [' + str(wnegative) + '%]', 'Strongly Negative [' + str(snegative) + '%]']
-        # labels = ['Positive [' + str(positive) + '%]', 'Neutral [' + str(neutral) + '%]','Negative [' + str(negative) + '%]']
         sizes = [positive, wpositive, spositive, neutral, negative, wnegative, snegative]
-        # sizes = [positive, neutral, negative]
         colors = ['yellowgreen','lightgreen','darkgreen', 'gold', 'red','lightsalmon','darkred']
         
         fig = matplotlib.figure.Figure(figsize=(5,5))
         ax = fig.add_subplot(111)
         patches, texts = ax.pie(sizes, colors=colors, startangle=90)
         ax.legend(patches, labels, loc="best")
-        # ax1.title.set_text('First Plot')
         ax.title.set_text('USER: '+self.twitterUname+' TWEETS: '+str(self.NoOfTerms))
-        # ax.axis('equal')
-        # ax.tight_layout()
         canvas = FigureCanvasTkAgg(fig,master=self.root)
         canvas.get_tk_widget().grid(row=5,column=0,padx=5,pady=5,rowspan=23)
         self.MLBttn.grid(row=29,column=0,padx=5,pady=5, rowspan=2)
@@ -253,15 +219,15 @@ class SentimentAnalysisNLP:
             self.e3 = Entry(self.root,width=15)
             self.e4 = Entry(self.root,width=15)
             self.e5 = Entry(self.root,width=15)
-            self.e6 = Entry(self.root,width=15)
-            
+            self.e6 = Entry(self.root,width=15)  
+
             self.e1.grid(row=i,column= 1)
             self.e2.grid(row=i,column= 2)
             self.e3.grid(row=i,column= 3)
             self.e4.grid(row=i,column= 4)
             self.e5.grid(row=i,column= 5)
             self.e6.grid(row=i,column= 6)
-
+            
             self.e1.insert(END,line[1]) 
             self.e2.insert(END,line[2]) 
             self.e3.insert(END,line[4]) 
